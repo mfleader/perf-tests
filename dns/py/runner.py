@@ -332,7 +332,7 @@ class Runner(object):
 
   def _get_dns_ip(self, svcname):
     code, out, _ = self._kubectl(None, 'get', 'svc', '-o', 'yaml',
-                                svcname, '-nkube-system')
+                                svcname, '-n openshift-dns')
     if code != 0:
       raise Exception('error gettings dns ip for service %s: %d' %(svcname, code))
 
