@@ -107,13 +107,17 @@ class Runner(object):
       last_config_yaml = None
       for test_case in test_cases:
         try:
+          print(f"test case: {test_case}")
           inputs = Inputs(self.deployment_yaml, self.configmap_yaml,
                           ['/dnsperf', '-s', self.args.dns_ip])
+          # print(f'{inputs}')  
+
           test_case.configure(inputs)
           # pin server to a specific node
+
           inputs.deployment_yaml['spec']['template']['spec']['nodeName'] = \
               self.server_node
-
+          
           if not self.use_existing and (
               yaml.dump(inputs.deployment_yaml) !=
               yaml.dump(last_deploy_yaml) or
@@ -143,6 +147,7 @@ class Runner(object):
         except Exception:
           _log.info('Exception caught during run, cleaning up. %s',
                     traceback.format_exc())
+          # print(f"except inputs: {inputs}")                    
           self._teardown()
           self._teardown_client()
           raise
@@ -251,6 +256,8 @@ class Runner(object):
     with open(output_file + '.raw', 'w') as fh:
       fh.write(header)
       cmdline = inputs.dnsperf_cmdline
+      cmdline = [*cmdline, '-v']
+      print(f'** dnsperf cmdline: {cmdline}')
       code, out, err = self._kubectl(
           *([None, 'exec', podname, '--'] + [str(x) for x in cmdline]))
       fh.write('%s\n' % add_prefix('out | ', out))
@@ -332,7 +339,8 @@ class Runner(object):
 
   def _get_dns_ip(self, svcname):
     code, out, _ = self._kubectl(None, 'get', 'svc', '-o', 'yaml',
-                                svcname, '-n openshift-dns')
+                                svcname, '-nopenshift-dns')
+
     if code != 0:
       raise Exception('error gettings dns ip for service %s: %d' %(svcname, code))
 

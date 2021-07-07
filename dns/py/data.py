@@ -71,6 +71,8 @@ class Parser(object):
   """
   def __init__(self, out):
     self.lines = [x.strip() for x in out.split('\n')]
+    print('------------------lines--------------')
+    print(self.lines)
     self.results = {}
     self.histogram = []
 
@@ -90,6 +92,8 @@ class Parser(object):
           continue
         results[result.name] = result.val_type(match.group(1))
     self.results = results
+    # print('-------------results------------')
+    # print(results)
 
   def _parse_histogram(self):
     lines = [x for x in self.lines if re.match('^#histogram .*', x)]

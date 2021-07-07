@@ -42,6 +42,15 @@ class Inputs(object):
     self.deployment_yaml = copy.deepcopy(deployment_yaml)
     self.configmap_yaml = copy.deepcopy(configmap_yaml)
     self.dnsperf_cmdline = dnsperf_cmdline
+  
+  def __repr__(self):
+    return (
+      f"Inputs:\n"
+      f"  deployment    {self.deployment_yaml}\n\n"
+      f"  configmap     {self.configmap_yaml}\n\n"
+      f"  dnsperf args  {self.dnsperf_cmdline}\n"
+      f"-------------------------------"
+    )
 
 
 class Param(object):
@@ -95,6 +104,8 @@ class DeploymentContainerSpecParam(Param):
     spec = _item_by_predicate(
         inputs.deployment_yaml['spec']['template']['spec']['containers'],
         lambda x: x['name'] == self.container_name)
+    # print(f"spec: {spec}")        
+    # print('==============')
     _set_or_remove(spec, self.yaml_path, value)
 
 
@@ -160,12 +171,16 @@ class CorednsCache(Param):
   def set(self, inputs, value):
     if value > 0:
       cf = inputs.configmap_yaml['data']['Corefile']
-      cfList = cf.decode().split("\n")
+      # print(f'cf: {cf}')
+      # cfList = cf.decode().split("\n") deprecated
+      cfList = cf.split("\n")
       cfList.insert(1,
                     "  cache {\n"
                     "    success " + repr(value) + "\n"
                     "    denial " + repr(value) + "\n"
                     "  }")
+      newcf = '\n'.join(cfList)
+      # print(f"new cf: {newcf}")                    
       inputs.configmap_yaml['data']['Corefile'] = "\n".join(cfList)
 
 class DnsperfCmdlineParam(Param):
@@ -234,6 +249,7 @@ class TestCase(object):
     """
     Generate the right set of inputs to the test run.
     """
+
     for param, value in self.pv:
       param.set(inputs, value)
 
@@ -308,6 +324,9 @@ def _set_or_remove(root, path, value):
   |value| if not None, value to set, otherwise remove.
   """
   if value is not None:
+    # print(f'root: {root}')
+    # print(f'path: {path}')
+    # print(f'value: {value}')
     for label in path[:-1]:
       if label not in root:
         root[label] = {}
