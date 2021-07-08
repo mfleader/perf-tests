@@ -1,0 +1,1 @@
+python py/run_perf.py --kubectl-exec /usr/local/bin/kubectl --params params/coredns/dev.yaml --dns-server dns-default --service-yaml cluster/ocp-default-dns-svc.yaml --configmap-yaml cluster/ocp-default-dns-configmap.yaml --out-dir out --use-cluster-dns --deployment-yaml cluster/ocp-default-dns-deployment.yaml

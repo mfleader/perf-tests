@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dns-default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dns-default
+  template:
+    metadata:
+      labels:
+        app: dns-default
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: coredns
+        image: coredns/coredns:1.1.1
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+        args: [ "-conf", "/etc/coredns/Corefile" ]
+        env:
+        - name: PROMETHEUS_PORT
+          value: "9153"
+        ports:
+        - containerPort: 53
+          name: dns
+          protocol: UDP
+        - containerPort: 53
+          name: dns-tcp
+          protocol: TCP
+        - containerPort: 9153
+          name: metrics
+          protocol: TCP
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/coredns
+      dnsPolicy: Default
+      volumes:
+        - name: config-volume
+          configMap:
+            name: dns-default
+            items:
+            - key: Corefile
+              path: Corefile

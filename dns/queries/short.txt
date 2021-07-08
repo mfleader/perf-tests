@@ -1,0 +1,1 @@
+openshift.default.svc.cluster.local A

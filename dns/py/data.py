@@ -188,6 +188,7 @@ class Parser(object):
     # print(self.lines)
     self.results = {}
     self.histogram = []
+    self.raw = []
 
   def parse(self):
     self._parse_raw()
@@ -198,10 +199,10 @@ class Parser(object):
   def _parse_raw(self):
     raw = self.out.split('seconds')
     raw = raw[1].split('[Status]')
-    # print(len(raw))
-    # print(raw[0])
-    lines = [ self._parse_raw_line(line) for line in raw[0].split('\n') if len(line) > 0 ]
-    # print(lines)
+    self.raw = [ 
+      self._parse_raw_line(line) 
+      for line in raw[0].split('\n') if len(line) > 0 
+    ]
 
   def _parse_raw_line(self, line) -> DnsperfQueryData:
     words = line.split(' ')
@@ -211,7 +212,8 @@ class Parser(object):
     #   qtype = words[3],
     #   rtt_mu_s = int(float(words[4]) * 10**6)
     # )
-    return (words[1], words[2], words[3], int(float(words[4]) * 10**6))
+    # convert seconds to microseconds
+    return [words[1], words[2], words[3], int(float(words[4]) * 10**6)]
 
   def _parse_results(self):
     results = {}

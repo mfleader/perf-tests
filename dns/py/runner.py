@@ -294,7 +294,8 @@ class Runner(object):
         results['data']['max_perfserver_memory'] = res_usage.get()
         results['data']['max_kubedns_cpu'] = res_usage.get()
         results['data']['max_kubedns_memory'] = res_usage.get()
-        results['data']['histogram'] = parser.histogram
+        results['data']['raw'] = parser.raw
+        # results['data']['histogram'] = parser.histogram
       except Exception:
         _log.exception('Error parsing results.')
         results['data']['ok'] = False
