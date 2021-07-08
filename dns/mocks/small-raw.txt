@@ -1,0 +1,34 @@
+DNS Performance Testing Tool
+Nominum Version 2.1.0.0
+
+[Status] Command line: dnsperf -s 172.30.0.10 -l 60 -d /queries/all-queries.txt -v
+[Status] Sending queries (to 172.30.0.10)
+[Status] Started at: Wed Jul  7 22:14:21 2021
+[Status] Stopping after 60.000000 seconds
+> NOERROR kubernetes.default.svc.cluster.local A 0.000856
+> NOERROR dittybopper.dittybopper.svc.cluster.local A 0.000150
+> NOERROR openshift.default.svc.cluster.local A 0.000200
+> NOERROR metrics.openshift-apiserver-operator.svc.cluster.local A 0.000134
+> NOERROR check-endpoints.openshift-apiserver.svc.cluster.local A 0.000096
+> NOERROR api.openshift-apiserver.svc.cluster.local A 0.000164
+> NOERROR metrics.openshift-authentication-operator.svc.cluster.local A 0.000107
+> NOERROR kubelet.kube-system.svc.cluster.local A 0.000286
+> NOERROR oauth-openshift.openshift-authentication.svc.cluster.local A 0.000141
+> NOERROR openshift-state-metrics.openshift-monitoring.svc.cluster.local A 0.002818
+> NOERROR api.openshift-apiserver.svc.cluster.local A 0.001046
+> NOERROR kubelet.kube-system.svc.cluster.local A 0.001071
+[Status] Testing complete (time limit)
+
+Statistics:
+
+  Queries sent:         4551986
+  Queries completed:    4551986 (100.00%)
+  Queries lost:         0 (0.00%)
+
+  Response codes:       NOERROR 4551986 (100.00%)
+  Average packet size:  request 77, response 186
+  Run time (s):         60.001039
+  Queries per second:   75865.119602
+
+  Average Latency (s):  0.001278 (min 0.000024, max 0.083240)
+  Latency StdDev (s):   0.001533
