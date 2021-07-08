@@ -257,7 +257,7 @@ class Runner(object):
       fh.write(header)
       cmdline = inputs.dnsperf_cmdline
       cmdline = [*cmdline, '-v']
-      print(f'** dnsperf cmdline: {cmdline}')
+      # print(f'** dnsperf cmdline: {cmdline}')
       code, out, err = self._kubectl(
           *([None, 'exec', podname, '--'] + [str(x) for x in cmdline]))
       fh.write('%s\n' % add_prefix('out | ', out))
@@ -277,6 +277,9 @@ class Runner(object):
       results['data'] = {}
 
       try:
+        # print('writing all-together!')
+        # with open('all-together.txt', 'w') as f:
+        #   f.write(out)
         parser = Parser(out)
         parser.parse()
 
