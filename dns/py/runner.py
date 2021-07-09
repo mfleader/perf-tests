@@ -20,11 +20,13 @@ import os
 import subprocess
 import time
 import traceback
-import yaml
 import threading
 import re
 import queue
 from subprocess import PIPE
+
+import orjson
+import yaml
 
 from data import Parser, ResultDb
 from params import ATTRIBUTE_CLUSTER_DNS, ATTRIBUTE_NODELOCAL_DNS, Inputs, TestCases, QueryFile, RunLengthSeconds
@@ -268,7 +270,7 @@ class Runner(object):
 
     dt.join()
 
-    with open(output_file, 'w') as fh:
+    with open(output_file, 'wb') as fh:
       results = {}
       results['params'] = test_case.to_yaml()
       results['code'] = code
@@ -301,7 +303,9 @@ class Runner(object):
         results['data']['ok'] = False
         results['data']['msg'] = 'parsing error:\n%s' % traceback.format_exc()
 
-      fh.write(yaml.dump(results))
+      del results['stderr']
+      del results['stdout']
+      fh.write(orjson.dumps(results))
 
       if self.db is not None and results['data']['ok']:
         self.db.put(results)
