@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import copy
-import json
 import logging
 import os
 import subprocess
@@ -67,12 +66,8 @@ class Runner(object):
       self.test_params.set_param(QueryFile().name, _dnsperf_qfile_name)
     self.args.testsvc_yaml = yaml.safe_load(open(self.args.testsvc_yaml, 'r')) if \
         self.args.testsvc_yaml else None
-
-
     self.server_node = None
     self.use_existing = False
-
-
     self.attributes = set()
 
     if self.args.use_cluster_dns:
@@ -157,7 +152,6 @@ class Runner(object):
     finally:
       self._teardown()
       self._teardown_client()
-
 
     return 0
 
@@ -251,7 +245,8 @@ class Runner(object):
 '''.format(run_id=test_case.run_id,
            run_subid=test_case.run_subid,
            now=time.ctime(),
-           test_case=json.dumps(test_case.to_yaml()))
+            test_case=orjson.dumps(test_case.to_yaml())
+           )
 
     with open(output_file + '.raw', 'w') as fh:
       fh.write(header)
@@ -270,16 +265,12 @@ class Runner(object):
 
     with open(output_file, 'wb') as fh:
       results = {}
-      results['params'] = test_case.to_yaml()
+      results['metadata'] = test_case.to_yaml()
+      results['metadata']['datetime'] = time.ctime()
       results['code'] = code
-      results['stdout'] = out.split('\n')
-      results['stderr'] = err.split('\n')
       results['data'] = {}
 
       try:
-        # print('writing all-together!')
-        # with open('all-together.txt', 'w') as f:
-        #   f.write(out)
         parser = Parser(out)
         parser.parse()
 
@@ -295,17 +286,14 @@ class Runner(object):
         results['data']['max_kubedns_cpu'] = res_usage.get()
         results['data']['max_kubedns_memory'] = res_usage.get()
         results['data']['raw'] = parser.raw
-        # results['data']['histogram'] = parser.histogram
+
       except Exception:
         _log.exception('Error parsing results.')
         results['data']['ok'] = False
         results['data']['msg'] = 'parsing error:\n%s' % traceback.format_exc()
 
-      del results['stderr']
-      del results['stdout']
       fh.write(orjson.dumps(results))
   
-
 
   def _create_test_services(self):
     if not self.args.testsvc_yaml:
