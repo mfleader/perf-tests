@@ -17,8 +17,6 @@
 import logging
 import re
 
-from params import PARAMETERS
-
 _log = logging.getLogger(__name__)
 
 
@@ -100,11 +98,6 @@ class Parser(object):
     self.results = results
     # print('-------------results------------')
     # print(results)
-
-
-
-
-
 
 
 def main():
