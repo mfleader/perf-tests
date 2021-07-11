@@ -28,7 +28,7 @@ from subprocess import PIPE
 import orjson
 import yaml
 
-from data import Parser, ResultDb
+from data import Parser
 from params import ATTRIBUTE_CLUSTER_DNS, ATTRIBUTE_NODELOCAL_DNS, Inputs, TestCases, QueryFile, RunLengthSeconds
 
 _log = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class Runner(object):
 
     self.server_node = None
     self.use_existing = False
-    self.db = ResultDb(self.args.db) if self.args.db else None
+
 
     self.attributes = set()
 
@@ -158,8 +158,6 @@ class Runner(object):
       self._teardown()
       self._teardown_client()
 
-      if self.db is not None:
-        self.db.commit()
 
     return 0
 
@@ -306,9 +304,8 @@ class Runner(object):
       del results['stderr']
       del results['stdout']
       fh.write(orjson.dumps(results))
+  
 
-      if self.db is not None and results['data']['ok']:
-        self.db.put(results)
 
   def _create_test_services(self):
     if not self.args.testsvc_yaml:
