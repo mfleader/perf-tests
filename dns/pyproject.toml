@@ -6,9 +6,7 @@ authors = ["Matthew F Leader <mleader@redhat.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-numpy = "^1.21.0"
 orjson = "^3.6.0"
-attrs = "^21.2.0"
 PyYAML = "^5.4.1"
 
 [tool.poetry.dev-dependencies]

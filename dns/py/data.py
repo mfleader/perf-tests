@@ -15,9 +15,7 @@
 # limitations under the License.
 
 import logging
-import numpy
 import re
-import sqlite3
 
 from params import PARAMETERS
 
@@ -60,9 +58,6 @@ RESULTS = [
 ]
 
 
-
-
-
 class Parser(object):
   """
   Parses dnsperf output file.
@@ -73,7 +68,6 @@ class Parser(object):
     # print('------------------lines--------------')
     # print(self.lines)
     self.results = {}
-    self.histogram = []
     self.raw = []
 
   def parse(self):
@@ -90,12 +84,6 @@ class Parser(object):
 
   def _parse_raw_line(self, line):
     words = line.split(' ')
-    # return DnsperfQueryData(
-    #   rcode = words[1],
-    #   fqdn = words[2],
-    #   qtype = words[3],
-    #   rtt_mu_s = int(float(words[4]) * 10**6)
-    # )
     # convert seconds to microseconds
     return [words[1], words[2], words[3], int(float(words[4]) * 10**6)]
 
