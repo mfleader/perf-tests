@@ -182,53 +182,6 @@ class Runner(object):
       raise Exception('create failed')
     _log.info('Create %s/%s ok', yaml_obj['kind'], yaml_obj['metadata']['name'])
 
-  def _run_top(self, output_q):
-    kubedns_top_args = ['-l', 'k8s-app=kube-dns', '-n', 'kube-system']
-    if self.args.nodecache_ip:
-      perfserver_top_args = ['-l', 'k8s-app=node-local-dns', '-n', 'kube-system']
-    else:
-      perfserver_top_args = ['-l', _app_label]
-    run_time = int(self.test_params.get_param(RunLengthSeconds().name)[0])
-    t_end = time.time() + run_time
-    while time.time() < t_end:
-      code, perfout, err = self._kubectl(*([None, 'top', 'pod'] + perfserver_top_args))
-      code, kubeout, err = self._kubectl(*([None, 'top', 'pod'] + kubedns_top_args))
-      # Output is of the form:
-      # NAME                        CPU(cores)   MEMORY(bytes)
-      # kube-dns-686548bc64-4q7wg   2m           31Mi
-      if not isinstance(perfout, str):
-        perfout = perfout.decode()
-      if not isinstance(kubeout, str):
-        kubeout = kubeout.decode()
-      pcpu = re.findall(' \d+m ', perfout)
-      pmem = re.findall(' \d+Mi ', perfout)
-      kcpu = re.findall(' \d+m ', kubeout)
-      kmem = re.findall(' \d+Mi ', kubeout)
-      max_perfserver_cpu = 0
-      max_perfserver_mem = 0
-      max_kubedns_cpu = 0
-      max_kubedns_mem = 0
-      for c in pcpu:
-        val = int(re.findall('\d+', c)[0])
-        if val > max_perfserver_cpu:
-          max_perfserver_cpu = val
-      for m in pmem:
-        val = int(re.findall('\d+', m)[0])
-        if val > max_perfserver_mem:
-          max_perfserver_mem = val
-      for c in kcpu:
-        val = int(re.findall('\d+', c)[0])
-        if val > max_kubedns_cpu:
-          max_kubedns_cpu = val
-      for m in kmem:
-        val = int(re.findall('\d+', m)[0])
-        if val > max_kubedns_mem:
-          max_kubedns_mem = val
-      time.sleep(2)
-    output_q.put(max_perfserver_cpu)
-    output_q.put(max_perfserver_mem)
-    output_q.put(max_kubedns_cpu)
-    output_q.put(max_kubedns_mem)
 
   def _run_perf(self, test_case, inputs, podname):
     _log.info('Running test case: %s', test_case)
@@ -236,9 +189,7 @@ class Runner(object):
     output_file = '%s/run-%s/result-%s-%s.out' % \
       (self.args.out_dir, test_case.run_id, test_case.run_subid, test_case.pod_name)
     _log.info('Writing to output file %s', output_file)
-    res_usage = queue.Queue()
-    dt = threading.Thread(target=self._run_top,args=[res_usage])
-    dt.start()
+
     header = '''### run_id {run_id}:{run_subid}
 ### date {now}
 ### settings {test_case}
@@ -261,7 +212,7 @@ class Runner(object):
       if code != 0:
         raise Exception('error running dnsperf - %s, podname %s', err, podname)
 
-    dt.join()
+    # dt.join()
 
     with open(output_file, 'wb') as fh:
       results = {}
@@ -281,10 +232,6 @@ class Runner(object):
 
         for key, value in list(parser.results.items()):
           results['data'][key] = value
-        results['data']['max_perfserver_cpu'] = res_usage.get()
-        results['data']['max_perfserver_memory'] = res_usage.get()
-        results['data']['max_kubedns_cpu'] = res_usage.get()
-        results['data']['max_kubedns_memory'] = res_usage.get()
         results['data']['raw'] = parser.raw
 
       except Exception:
