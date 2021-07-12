@@ -156,7 +156,7 @@ class Runner(object):
     return 0
 
   def _run_perf(self, test_case, inputs, podname):
-    _log.info('Running test case: %s', test_case)
+    _log.info(f'Running test case: {test_case}')
     output_file = (
         f"{self.args.out_dir}/"
         f"run-{test_case.run_id}/"
@@ -167,8 +167,8 @@ class Runner(object):
         f"### date {time.ctime()}\n"
         f"### settings {orjson.dumps(test_case.to_yaml())}"
     )           
-    _log.info('Writing to output file %s', output_file)
-    
+    _log.info(f'Writing to output file {output_file}')
+
     with open(output_file + '.raw', 'w') as fh:
       fh.write(header)
       cmdline = inputs.dnsperf_cmdline
@@ -176,8 +176,8 @@ class Runner(object):
       # print(f'** dnsperf cmdline: {cmdline}')
       code, out, err = self._kubectl(
           *([None, 'exec', podname, '--'] + [str(x) for x in cmdline]))
-      fh.write('%s\n' % add_prefix('out | ', out))
-      fh.write('%s\n' % add_prefix('err | ', err))
+      fh.write(f"{add_prefix('out | ', out)}\n")
+      fh.write(f"{add_prefix('err | ', err)}\n")
 
       if code != 0:
         raise Exception(f'error running dnsperf - {err}, podname {podname}')
