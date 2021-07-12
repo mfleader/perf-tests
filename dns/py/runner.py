@@ -155,6 +155,57 @@ class Runner(object):
 
     return 0
 
+  def _run_perf(self, test_case, inputs, podname):
+    _log.info('Running test case: %s', test_case)
+    output_file = (
+        f"{self.args.out_dir}/"
+        f"run-{test_case.run_id}/"
+        f"result-{test_case.run_subid}-{test_case.pod_name}"
+    )
+    header = (
+        f"### run_id {test_case.run_id}:{test_case.run_subid}\n"
+        f"### date {time.ctime()}\n"
+        f"### settings {orjson.dumps(test_case.to_yaml())}"
+    )           
+    _log.info('Writing to output file %s', output_file)
+    
+    with open(output_file + '.raw', 'w') as fh:
+      fh.write(header)
+      cmdline = inputs.dnsperf_cmdline
+      cmdline = [*cmdline, '-v']
+      # print(f'** dnsperf cmdline: {cmdline}')
+      code, out, err = self._kubectl(
+          *([None, 'exec', podname, '--'] + [str(x) for x in cmdline]))
+      fh.write('%s\n' % add_prefix('out | ', out))
+      fh.write('%s\n' % add_prefix('err | ', err))
+
+      if code != 0:
+        raise Exception(f'error running dnsperf - {err}, podname {podname}')
+
+    with open(output_file, 'wb') as fh:
+      results = {}
+      results['metadata'] = test_case.to_yaml()
+      results['metadata']['datetime'] = time.ctime()
+      results['code'] = code
+      results['data'] = {}
+
+      try:
+        parser = Parser(out)
+        parser.parse()
+        _log.info('Test results parsed')
+        results['data']['ok'] = True
+        results['data']['msg'] = None
+        for key, value in list(parser.results.items()):
+          results['data'][key] = value
+        results['data']['raw'] = parser.raw
+
+      except Exception:
+        _log.exception('Error parsing results.')
+        results['data']['ok'] = False
+        results['data']['msg'] = f'parsing error:\n{traceback.format_exc()}'
+
+      fh.write(orjson.dumps(results))    
+
   def _kubectl(self, stdin, *args):
     """
     |return| (return_code, stdout, stderr)
@@ -182,65 +233,6 @@ class Runner(object):
       raise Exception('create failed')
     _log.info('Create %s/%s ok', yaml_obj['kind'], yaml_obj['metadata']['name'])
 
-
-  def _run_perf(self, test_case, inputs, podname):
-    _log.info('Running test case: %s', test_case)
-
-    output_file = '%s/run-%s/result-%s-%s.out' % \
-      (self.args.out_dir, test_case.run_id, test_case.run_subid, test_case.pod_name)
-    _log.info('Writing to output file %s', output_file)
-
-    header = '''### run_id {run_id}:{run_subid}
-### date {now}
-### settings {test_case}
-'''.format(run_id=test_case.run_id,
-           run_subid=test_case.run_subid,
-           now=time.ctime(),
-            test_case=orjson.dumps(test_case.to_yaml())
-           )
-
-    with open(output_file + '.raw', 'w') as fh:
-      fh.write(header)
-      cmdline = inputs.dnsperf_cmdline
-      cmdline = [*cmdline, '-v']
-      # print(f'** dnsperf cmdline: {cmdline}')
-      code, out, err = self._kubectl(
-          *([None, 'exec', podname, '--'] + [str(x) for x in cmdline]))
-      fh.write('%s\n' % add_prefix('out | ', out))
-      fh.write('%s\n' % add_prefix('err | ', err))
-
-      if code != 0:
-        raise Exception('error running dnsperf - %s, podname %s', err, podname)
-
-    # dt.join()
-
-    with open(output_file, 'wb') as fh:
-      results = {}
-      results['metadata'] = test_case.to_yaml()
-      results['metadata']['datetime'] = time.ctime()
-      results['code'] = code
-      results['data'] = {}
-
-      try:
-        parser = Parser(out)
-        parser.parse()
-
-        _log.info('Test results parsed')
-
-        results['data']['ok'] = True
-        results['data']['msg'] = None
-
-        for key, value in list(parser.results.items()):
-          results['data'][key] = value
-        results['data']['raw'] = parser.raw
-
-      except Exception:
-        _log.exception('Error parsing results.')
-        results['data']['ok'] = False
-        results['data']['msg'] = 'parsing error:\n%s' % traceback.format_exc()
-
-      fh.write(orjson.dumps(results))
-  
 
   def _create_test_services(self):
     if not self.args.testsvc_yaml:

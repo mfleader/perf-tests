@@ -48,11 +48,7 @@ RESULTS = [
     Result('max_latency', float,
            re.compile(r'\s*Average Latency \(s\):.*max ([0-9.]+).*')),
     Result('stddev_latency', float,
-           re.compile(r'\s*Latency StdDev \(s\):\s*([0-9.]+)')),
-    Result('max_perfserver_cpu', int, None),
-    Result('max_perfserver_memory', int, None),
-    Result('max_kubedns_cpu', int, None),
-    Result('max_kubedns_memory', int, None),
+           re.compile(r'\s*Latency StdDev \(s\):\s*([0-9.]+)'))
 ]
 
 
@@ -101,7 +97,7 @@ class Parser(object):
 
 
 def main():
-  with open('mocks/huge-raw.txt', 'r') as smallf:
+  with open('mocks/small-raw.txt', 'r') as smallf:
     smalld = smallf.read()
     parser = Parser(smalld)
     parser.parse()
